@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LL教室 点検補助アプリ（座席マス目版）</title>
+  <title>LL教室 点検補助アプリ（スマホ最適化版 v7）</title>
   <style>
     :root{
       --bg:#f6f7f9;
@@ -209,93 +209,76 @@
       font-weight:500;
     }
 
-    .seat-btn{
+        .seat-btn{
       position:relative;
-      min-width:84px;
-      min-height:54px;
+      min-width:60px;
+      min-height:44px;
       border:1px solid var(--line);
-      border-radius:12px;
+      border-radius:10px;
       background:#fff;
-      padding:6px 8px;
+      padding:4px 5px;
       cursor:pointer;
-      text-align:left;
+      text-align:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       transition:.15s ease;
     }
 
     .seat-btn:hover{
       border-color:#bfd0f5;
-      background:#fbfdff;
       transform:translateY(-1px);
     }
 
     .seat-btn.selected{
       border-color:var(--accent);
-      box-shadow:0 0 0 3px rgba(47,111,237,.12);
-      background:#f8fbff;
+      box-shadow:0 0 0 3px rgba(47,111,237,.16);
     }
 
     .seat-btn .seat-name{
       font-weight:700;
-      font-size:.95rem;
-      line-height:1.2;
-      letter-spacing:.02em;
+      font-size:.86rem;
+      line-height:1.05;
+      letter-spacing:.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      width:100%;
     }
 
-    .seat-btn .seat-meta{
-      margin-top:4px;
-      display:flex;
-      gap:6px;
-      align-items:center;
-      font-size:.74rem;
-      color:var(--muted);
-      line-height:1;
-      min-height:12px;
+    /* 状態を座席マスの色で表現（横幅節約）
+       異常箇所が多いほど赤を濃くする（1〜4件） */
+    .seat-btn.has-memo:not(.has-issue){
+      background:#f2f7ff;
+      border-color:#d5e3ff;
     }
 
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:18px;
-      height:18px;
-      padding:0 5px;
-      border-radius:999px;
-      font-size:.72rem;
-      line-height:1;
-      border:1px solid transparent;
-      background:#f5f6f8;
-      color:#555;
+    .seat-btn.has-issue.issue-1{
+      background:#fff3f3;
+      border-color:#f0d3d3;
     }
 
-    .badge.badge-danger{
-      background:#fff2f2;
-      color:#b42318;
-      border-color:#f1c5c5;
+    .seat-btn.has-issue.issue-2{
+      background:#ffe6e6;
+      border-color:#eab9b9;
     }
 
-    .badge.badge-note{
-      background:#f7f7ff;
-      color:#4650b9;
-      border-color:#dfe3ff;
+    .seat-btn.has-issue.issue-3{
+      background:#ffd8d8;
+      border-color:#e59a9a;
     }
 
-    .seat-btn .mark{
-      position:absolute;
-      top:6px;
-      right:6px;
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      background:transparent;
-      border:1px solid transparent;
-    }
-    .seat-btn.has-issue .mark{
-      background:#e53935;
-      border-color:#fff;
-      box-shadow:0 0 0 1px #e2a6a6;
+    .seat-btn.has-issue.issue-4{
+      background:#ffc6c6;
+      border-color:#dc7f7f;
     }
 
-    .inspector{
+    /* メモもある場合は枠を青寄りにして区別（背景は赤優先） */
+    .seat-btn.has-issue.has-memo{
+      box-shadow: inset 0 0 0 1px #c9dcff;
+    }
+
+.inspector{
       border:1px solid var(--line);
       border-radius:12px;
       background:#fff;
@@ -419,21 +402,50 @@
     }
 
     @media (max-width: 560px){
+      .wrap{ margin:8px auto; padding:0 6px 14px; }
+      .panel{ padding:8px; margin-bottom:8px; border-radius:12px; }
+      h1{ font-size:1rem; margin-bottom:4px; }
+      .sub{ display:none; }
+      .controls{ gap:6px; }
       .field, .check-group{ grid-column:span 12; }
-      .buttons button{ width:100%; }
-      .seat-btn{ min-width:72px; min-height:52px; }
-      .header-cell, .row-header, .corner-cell{ min-height:36px; }
+      .field label{ font-size:.82rem; margin-bottom:4px; }
+      .field input[type="number"]{ padding:8px 10px; font-size:13px; border-radius:8px; }
+      .check-group{ padding:8px 10px; border-radius:8px; }
+      .check-group .ttl{ font-size:.82rem; margin-bottom:6px; }
+      .check-row{ gap:8px 12px; }
+      .check-row label{ font-size:.9rem; }
+      .buttons{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+      .buttons button{ width:100%; padding:8px 10px; font-size:13px; border-radius:8px; }
+      .status{ margin-top:6px; font-size:.82rem; }
+      .grid-panel .legend{ display:none; }
+      .grid-wrap{ padding:3px; border-radius:10px; }
+      .seat-grid{ gap:3px; }
+      .seat-btn{ min-width:40px; min-height:32px; padding:2px 3px; border-radius:7px; }
+      .seat-btn .seat-name{ font-size:.68rem; line-height:1.0; }
+      .header-cell, .row-header, .corner-cell{ min-height:26px; border-radius:6px; font-size:.72rem; padding:1px 3px; }
+      .main{ gap:8px; }
+      .inspector{ padding:8px; border-radius:10px; }
+      .inspector h2{ font-size:.94rem; margin-bottom:6px; }
+      .inspector .seat-target{ margin-bottom:8px; padding:6px 8px; border-radius:8px; font-size:.88rem; }
+      .inspector .placeholder{ font-size:.86rem; line-height:1.4; padding:2px 0; }
+      .chk-list{ gap:6px; margin-bottom:8px; }
+      .chk-item{ padding:7px 8px; border-radius:8px; }
+      .chk-item label{ font-size:.9rem; gap:6px; }
+      .chk-item input[type="checkbox"]{ width:16px; height:16px; }
+      .inspector .field2{ margin-top:6px; }
+      .inspector .field2 label{ font-size:.84rem; margin-bottom:4px; }
+      .inspector textarea{ min-height:72px; padding:8px 10px; font-size:13px; border-radius:8px; }
+      .inspector .actions{ margin-top:8px; }
+      .mini{ padding:7px 9px; font-size:12px; }
+      .count-box{ display:none; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="panel">
-      <h1>LL教室 点検補助アプリ（座席マス目版）</h1>
-      <div class="sub">
-        座席をマス目で表示し、座席をタップして点検内容を入力します。CSVで保存できます。<br>
-        ※ 各チェックは「異常あり（要確認）」の想定です。
-      </div>
+      <h1>LL教室 点検補助アプリ</h1>
+      <div class="sub">座席をタップして入力 → CSV保存</div>
 
       <div class="controls">
         <div class="field">
@@ -466,8 +478,6 @@
           <button id="generateBtn" class="primary">座席マス目を作成 / 更新</button>
           <button id="csvBtn" class="ghost">CSV保存</button>
           <button id="copyCsvBtn">結果コピー（CSV）</button>
-          <button id="saveLocalBtn">一時保存（端末内）</button>
-          <button id="loadLocalBtn">一時保存を読込</button>
           <button id="clearBtn" class="danger">全座席の入力をクリア</button>
         </div>
       </div>
@@ -477,11 +487,7 @@
 
     <div class="main">
       <div class="panel grid-panel">
-        <div class="legend">
-          <span><span class="dot" style="background:#e53935;"></span>異常あり</span>
-          <span>※ 座席右上の赤点 = どれか1つ以上チェックあり</span>
-          <span>メモあり = 「その他」に入力あり</span>
-        </div>
+        <div class="legend"><span><span class="dot" style="background:#ffd9d9;"></span>赤が濃いほど異常箇所が多い</span><span><span class="dot" style="background:#dbeaff;"></span>青=メモのみ</span></div>
 
         <div class="grid-wrap">
           <div id="seatGrid" class="seat-grid" aria-label="座席マス目"></div>
@@ -492,8 +498,7 @@
         <h2>点検入力</h2>
         <div id="inspectorBody">
           <div class="placeholder">
-            左の座席をタップしてください。<br>
-            選んだ座席の点検内容をここで入力できます。
+            座席をタップして入力してください。
           </div>
         </div>
       </div>
@@ -502,8 +507,6 @@
 
   <script>
     (() => {
-      const STORAGE_KEY = "ll_inspect_grid_v2";
-
       const el = {
         colCount: document.getElementById("colCount"),
         rowCount: document.getElementById("rowCount"),
@@ -514,8 +517,6 @@
         generateBtn: document.getElementById("generateBtn"),
         csvBtn: document.getElementById("csvBtn"),
         copyCsvBtn: document.getElementById("copyCsvBtn"),
-        saveLocalBtn: document.getElementById("saveLocalBtn"),
-        loadLocalBtn: document.getElementById("loadLocalBtn"),
         clearBtn: document.getElementById("clearBtn"),
         status: document.getElementById("status"),
         seatGrid: document.getElementById("seatGrid"),
@@ -647,7 +648,10 @@
 
         const grid = el.seatGrid;
         grid.innerHTML = "";
-        grid.style.gridTemplateColumns = `72px repeat(${cols.length}, minmax(84px, 1fr))`;
+        const isCompactMobile = window.matchMedia("(max-width: 560px)").matches;
+        const rowHeaderWidth = isCompactMobile ? 28 : 56;
+        const seatMinWidth = isCompactMobile ? 40 : 60;
+        grid.style.gridTemplateColumns = `${rowHeaderWidth}px repeat(${cols.length}, minmax(${seatMinWidth}px, 1fr))`;
 
         const corner = document.createElement("div");
         corner.className = "corner-cell";
@@ -682,45 +686,41 @@
 
             const issueCount = seatIssueCount(seat);
             const hasMemo = seatHasMemo(seat);
-            if(issueCount > 0) btn.classList.add("has-issue");
+            if(issueCount > 0){
+              btn.classList.add("has-issue");
+              btn.classList.add(`issue-${Math.min(issueCount, 4)}`);
+            }
+            if(hasMemo) btn.classList.add("has-memo");
 
             const name = document.createElement("div");
             name.className = "seat-name";
             name.textContent = seat;
 
-            const meta = document.createElement("div");
-            meta.className = "seat-meta";
-
-            if(issueCount > 0){
-              const b1 = document.createElement("span");
-              b1.className = "badge badge-danger";
-              b1.textContent = `異常 ${issueCount}`;
-              meta.appendChild(b1);
+            let stateText = "問題なし";
+            if(issueCount > 0 && hasMemo){
+              stateText = `異常 ${issueCount}件 / メモあり`;
+            }else if(issueCount > 0){
+              stateText = `異常 ${issueCount}件`;
+            }else if(hasMemo){
+              stateText = "メモあり";
             }
-
-            if(hasMemo){
-              const b2 = document.createElement("span");
-              b2.className = "badge badge-note";
-              b2.textContent = "メモ";
-              meta.appendChild(b2);
-            }
-
-            if(issueCount === 0 && !hasMemo){
-              meta.textContent = "未入力 / 問題なし";
-            }
-
-            const mark = document.createElement("span");
-            mark.className = "mark";
-            mark.setAttribute("aria-hidden", "true");
+            btn.title = `${seat} / ${stateText}`;
 
             btn.appendChild(name);
-            btn.appendChild(meta);
-            btn.appendChild(mark);
 
             btn.addEventListener("click", () => {
               state.selectedSeat = seat;
               renderGrid();
               renderInspector();
+
+              if(window.matchMedia("(max-width: 980px)").matches){
+                const panel = document.getElementById("inspector");
+                if(panel){
+                  requestAnimationFrame(() => {
+                    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                  });
+                }
+              }
             });
 
             grid.appendChild(btn);
@@ -741,8 +741,7 @@
         if(!seat){
           el.inspectorBody.innerHTML = `
             <div class="placeholder">
-              左の座席をタップしてください。<br>
-              選んだ座席の点検内容をここで入力できます。
+              座席をタップして入力してください。
             </div>
           `;
           return;
@@ -789,12 +788,7 @@
           label.appendChild(input);
           label.appendChild(text);
 
-          const hint = document.createElement("div");
-          hint.className = "hint";
-          hint.textContent = "チェックを入れると CSV で「異常あり」と出力します";
-
           box.appendChild(label);
-          box.appendChild(hint);
           chkList.appendChild(box);
         });
 
@@ -835,14 +829,6 @@
 
         actions.appendChild(clearSeatBtn);
         el.inspectorBody.appendChild(actions);
-
-        const countBox = document.createElement("div");
-        countBox.className = "count-box";
-        countBox.innerHTML = `
-          異常チェック数: <strong>${issueCount}</strong><br>
-          メモ: <strong>${(d.other || "").trim() ? "あり" : "なし"}</strong>
-        `;
-        el.inspectorBody.appendChild(countBox);
       }
 
       function getCurrentRecordsForCsv(){
@@ -958,47 +944,6 @@
         setStatus("CSVを保存しました");
       }
 
-      function saveLocal(){
-        syncStateFromUi();
-        const payload = {
-          version: 2,
-          colCount: state.colCount,
-          rowCount: state.rowCount,
-          hOrder: state.hOrder,
-          vOrder: state.vOrder,
-          selectedSeat: state.selectedSeat,
-          seatData: state.seatData
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        setStatus("端末内に一時保存しました");
-      }
-
-      function loadLocal(){
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw){
-          setStatus("一時保存データがありません", true);
-          return;
-        }
-
-        try{
-          const d = JSON.parse(raw);
-          state.colCount = Math.max(1, Math.min(200, Number(d.colCount) || 1));
-          state.rowCount = Math.max(1, Math.min(200, Number(d.rowCount) || 1));
-          state.hOrder = d.hOrder === "desc" ? "desc" : "asc";
-          state.vOrder = d.vOrder === "desc" ? "desc" : "asc";
-          state.selectedSeat = typeof d.selectedSeat === "string" ? d.selectedSeat : null;
-          state.seatData = (d.seatData && typeof d.seatData === "object") ? d.seatData : {};
-          syncUiToState();
-          renderGrid();
-          if(state.selectedSeat && !isSeatInCurrentRange(state.selectedSeat)){
-            state.selectedSeat = null;
-          }
-          renderInspector();
-          setStatus("一時保存データを読み込みました");
-        }catch(e){
-          setStatus("一時保存データの読み込みに失敗しました", true);
-        }
-      }
 
       function clearAll(){
         if(!confirm("現在の範囲の全座席の入力内容をクリアします。よろしいですか？")) return;
@@ -1032,8 +977,6 @@
 
       el.csvBtn.addEventListener("click", exportCsv);
       el.copyCsvBtn.addEventListener("click", copyCsvToClipboard);
-      el.saveLocalBtn.addEventListener("click", saveLocal);
-      el.loadLocalBtn.addEventListener("click", loadLocal);
       el.clearBtn.addEventListener("click", clearAll);
 
       syncStateFromUi();
