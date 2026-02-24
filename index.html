@@ -465,6 +465,7 @@
         <div class="buttons">
           <button id="generateBtn" class="primary">座席マス目を作成 / 更新</button>
           <button id="csvBtn" class="ghost">CSV保存</button>
+          <button id="copyCsvBtn">結果コピー（CSV）</button>
           <button id="saveLocalBtn">一時保存（端末内）</button>
           <button id="loadLocalBtn">一時保存を読込</button>
           <button id="clearBtn" class="danger">全座席の入力をクリア</button>
@@ -512,6 +513,7 @@
         vDesc: document.getElementById("vDesc"),
         generateBtn: document.getElementById("generateBtn"),
         csvBtn: document.getElementById("csvBtn"),
+        copyCsvBtn: document.getElementById("copyCsvBtn"),
         saveLocalBtn: document.getElementById("saveLocalBtn"),
         loadLocalBtn: document.getElementById("loadLocalBtn"),
         clearBtn: document.getElementById("clearBtn"),
@@ -873,15 +875,14 @@
         return s;
       }
 
-      function exportCsv(){
+      function buildCsvText(){
         syncStateFromUi();
 
         const headers = ["座席","イヤーパッド","ヘッドバンド","アームバンド","マイク風防","その他"];
         const rows = getCurrentRecordsForCsv();
 
         if(rows.length === 0){
-          setStatus("CSV保存するデータがありません", true);
-          return;
+          return null;
         }
 
         const lines = [
@@ -889,8 +890,51 @@
           ...rows.map(r => headers.map(h => csvEscape(r[h])).join(","))
         ];
 
+        return lines.join("\r\n");
+      }
+
+      async function copyCsvToClipboard(){
+        const csvText = buildCsvText();
+        if(!csvText){
+          setStatus("コピーするデータがありません", true);
+          return;
+        }
+
+        try{
+          if(navigator.clipboard && window.isSecureContext){
+            await navigator.clipboard.writeText(csvText);
+          }else{
+            const ta = document.createElement("textarea");
+            ta.value = csvText;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            ta.style.top = "0";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(ta);
+            if(!ok){
+              throw new Error("copy failed");
+            }
+          }
+          setStatus("CSV内容をクリップボードにコピーしました（貼り付けできます）");
+        }catch(e){
+          setStatus("コピーに失敗しました。CSV保存を使ってください", true);
+        }
+      }
+
+      function exportCsv(){
+        const csvText = buildCsvText();
+
+        if(!csvText){
+          setStatus("CSV保存するデータがありません", true);
+          return;
+        }
+
         const bom = "\uFEFF";
-        const blob = new Blob([bom + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+        const blob = new Blob([bom + csvText], { type: "text/csv;charset=utf-8;" });
 
         const now = new Date();
         const stamp = [
@@ -987,6 +1031,7 @@
       });
 
       el.csvBtn.addEventListener("click", exportCsv);
+      el.copyCsvBtn.addEventListener("click", copyCsvToClipboard);
       el.saveLocalBtn.addEventListener("click", saveLocal);
       el.loadLocalBtn.addEventListener("click", loadLocal);
       el.clearBtn.addEventListener("click", clearAll);
