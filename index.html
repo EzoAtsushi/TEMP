@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LL教室 点検補助アプリ（座席マス目版）</title>
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --line:#dcdfe5;
+      --text:#222;
+      --muted:#666;
+      --accent:#2f6fed;
+      --accent-soft:#eef4ff;
+      --danger:#c62828;
+      --ok:#2e7d32;
+      --shadow:0 4px 18px rgba(0,0,0,.06);
+      --radius:14px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    }
+
+    .wrap{
+      max-width:1280px;
+      margin:16px auto;
+      padding:0 12px 24px;
+    }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin-bottom:14px;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:1.2rem;
+    }
+
+    .sub{
+      color:var(--muted);
+      font-size:.9rem;
+      margin-bottom:10px;
+      line-height:1.5;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(12, minmax(0, 1fr));
+      gap:10px;
+      align-items:end;
+    }
+
+    .field{
+      grid-column:span 3;
+      min-width:0;
+    }
+
+    .field label{
+      display:block;
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+
+    .field input[type="number"]{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      font-size:14px;
+    }
+
+    .field input:focus,
+    .inspector textarea:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(47,111,237,.12);
+    }
+
+    .check-group{
+      grid-column:span 3;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      padding:10px 12px;
+    }
+
+    .check-group .ttl{
+      font-size:.9rem;
+      margin-bottom:8px;
+    }
+
+    .check-row{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .check-row label{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      user-select:none;
+      font-size:.95rem;
+    }
+
+    .buttons{
+      grid-column:span 12;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:2px;
+    }
+
+    button{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:14px;
+      transition:.15s ease;
+    }
+    button:hover{ background:#fafbff; border-color:#cfd7e6; }
+    button.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.primary:hover{ background:#255ed2; border-color:#255ed2; }
+    button.ghost{ background:var(--accent-soft); color:#1d4fbf; border-color:#d7e3ff; }
+    button.danger{ color:var(--danger); border-color:#f0c7c7; }
+
+    .status{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.5;
+    }
+
+    .main{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 340px;
+      gap:14px;
+      align-items:start;
+    }
+
+    .grid-panel .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 14px;
+      color:var(--muted);
+      font-size:.85rem;
+      margin-bottom:8px;
+    }
+    .legend .dot{
+      display:inline-block;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      margin-right:4px;
+      vertical-align:middle;
+    }
+
+    .grid-wrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:8px;
+    }
+
+    .seat-grid{
+      display:grid;
+      gap:6px;
+      min-width:max-content;
+      align-items:stretch;
+    }
+
+    .corner-cell,
+    .header-cell,
+    .row-header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:40px;
+      border:1px solid #e8ebf0;
+      border-radius:10px;
+      background:#fbfcfe;
+      color:#333;
+      font-size:.9rem;
+      font-weight:600;
+      padding:4px 8px;
+      white-space:nowrap;
+    }
+
+    .corner-cell{
+      color:#999;
+      font-weight:500;
+    }
+
+    .seat-btn{
+      position:relative;
+      min-width:84px;
+      min-height:54px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:6px 8px;
+      cursor:pointer;
+      text-align:left;
+      transition:.15s ease;
+    }
+
+    .seat-btn:hover{
+      border-color:#bfd0f5;
+      background:#fbfdff;
+      transform:translateY(-1px);
+    }
+
+    .seat-btn.selected{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(47,111,237,.12);
+      background:#f8fbff;
+    }
+
+    .seat-btn .seat-name{
+      font-weight:700;
+      font-size:.95rem;
+      line-height:1.2;
+      letter-spacing:.02em;
+    }
+
+    .seat-btn .seat-meta{
+      margin-top:4px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      font-size:.74rem;
+      color:var(--muted);
+      line-height:1;
+      min-height:12px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      border-radius:999px;
+      font-size:.72rem;
+      line-height:1;
+      border:1px solid transparent;
+      background:#f5f6f8;
+      color:#555;
+    }
+
+    .badge.badge-danger{
+      background:#fff2f2;
+      color:#b42318;
+      border-color:#f1c5c5;
+    }
+
+    .badge.badge-note{
+      background:#f7f7ff;
+      color:#4650b9;
+      border-color:#dfe3ff;
+    }
+
+    .seat-btn .mark{
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:transparent;
+      border:1px solid transparent;
+    }
+    .seat-btn.has-issue .mark{
+      background:#e53935;
+      border-color:#fff;
+      box-shadow:0 0 0 1px #e2a6a6;
+    }
+
+    .inspector{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:12px;
+      position:sticky;
+      top:12px;
+      box-shadow:var(--shadow);
+    }
+
+    .inspector h2{
+      margin:0 0 8px;
+      font-size:1rem;
+    }
+
+    .inspector .seat-target{
+      margin-bottom:10px;
+      font-weight:700;
+      color:#1f3f8f;
+      background:#f4f8ff;
+      border:1px solid #dbe7ff;
+      border-radius:10px;
+      padding:8px 10px;
+    }
+
+    .inspector .placeholder{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.6;
+      padding:8px 2px;
+    }
+
+    .chk-list{
+      display:grid;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .chk-item{
+      border:1px solid #e8ebf0;
+      border-radius:10px;
+      padding:9px 10px;
+      background:#fff;
+    }
+
+    .chk-item label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      user-select:none;
+      font-size:.95rem;
+    }
+
+    .chk-item input[type="checkbox"]{
+      width:18px;
+      height:18px;
+    }
+
+    .chk-item .hint{
+      font-size:.8rem;
+      color:var(--muted);
+      margin-left:26px;
+      margin-top:4px;
+    }
+
+    .inspector .field2{
+      margin-top:8px;
+    }
+
+    .inspector .field2 label{
+      display:block;
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+
+    .inspector textarea{
+      width:100%;
+      min-height:88px;
+      resize:vertical;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:14px;
+      font-family:inherit;
+      background:#fff;
+    }
+
+    .inspector .actions{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .mini{
+      padding:8px 10px;
+      font-size:13px;
+    }
+
+    .count-box{
+      margin-top:10px;
+      border-top:1px dashed #e2e5ea;
+      padding-top:10px;
+      color:var(--muted);
+      font-size:.88rem;
+      line-height:1.6;
+    }
+
+    @media (max-width: 980px){
+      .main{
+        grid-template-columns:1fr;
+      }
+      .inspector{
+        position:static;
+      }
+    }
+
+    @media (max-width: 860px){
+      .field{ grid-column:span 6; }
+      .check-group{ grid-column:span 6; }
+    }
+
+    @media (max-width: 560px){
+      .field, .check-group{ grid-column:span 12; }
+      .buttons button{ width:100%; }
+      .seat-btn{ min-width:72px; min-height:52px; }
+      .header-cell, .row-header, .corner-cell{ min-height:36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>LL教室 点検補助アプリ（座席マス目版）</h1>
+      <div class="sub">
+        座席をマス目で表示し、座席をタップして点検内容を入力します。CSVで保存できます。<br>
+        ※ 各チェックは「異常あり（要確認）」の想定です。
+      </div>
+
+      <div class="controls">
+        <div class="field">
+          <label for="colCount">横の列数（A, B, C...）</label>
+          <input id="colCount" type="number" min="1" max="200" value="8" />
+        </div>
+
+        <div class="field">
+          <label for="rowCount">縦の列数（1, 2, 3...）</label>
+          <input id="rowCount" type="number" min="1" max="200" value="6" />
+        </div>
+
+        <div class="check-group">
+          <div class="ttl">横方向の並び順（左→右）</div>
+          <div class="check-row">
+            <label><input id="hAsc" type="checkbox" checked> 昇順</label>
+            <label><input id="hDesc" type="checkbox"> 降順</label>
+          </div>
+        </div>
+
+        <div class="check-group">
+          <div class="ttl">縦方向の並び順（上→下）</div>
+          <div class="check-row">
+            <label><input id="vAsc" type="checkbox" checked> 昇順</label>
+            <label><input id="vDesc" type="checkbox"> 降順</label>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button id="generateBtn" class="primary">座席マス目を作成 / 更新</button>
+          <button id="csvBtn" class="ghost">CSV保存</button>
+          <button id="saveLocalBtn">一時保存（端末内）</button>
+          <button id="loadLocalBtn">一時保存を読込</button>
+          <button id="clearBtn" class="danger">全座席の入力をクリア</button>
+        </div>
+      </div>
+
+      <div id="status" class="status">準備完了</div>
+    </div>
+
+    <div class="main">
+      <div class="panel grid-panel">
+        <div class="legend">
+          <span><span class="dot" style="background:#e53935;"></span>異常あり</span>
+          <span>※ 座席右上の赤点 = どれか1つ以上チェックあり</span>
+          <span>メモあり = 「その他」に入力あり</span>
+        </div>
+
+        <div class="grid-wrap">
+          <div id="seatGrid" class="seat-grid" aria-label="座席マス目"></div>
+        </div>
+      </div>
+
+      <div class="inspector" id="inspector">
+        <h2>点検入力</h2>
+        <div id="inspectorBody">
+          <div class="placeholder">
+            左の座席をタップしてください。<br>
+            選んだ座席の点検内容をここで入力できます。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "ll_inspect_grid_v2";
+
+      const el = {
+        colCount: document.getElementById("colCount"),
+        rowCount: document.getElementById("rowCount"),
+        hAsc: document.getElementById("hAsc"),
+        hDesc: document.getElementById("hDesc"),
+        vAsc: document.getElementById("vAsc"),
+        vDesc: document.getElementById("vDesc"),
+        generateBtn: document.getElementById("generateBtn"),
+        csvBtn: document.getElementById("csvBtn"),
+        saveLocalBtn: document.getElementById("saveLocalBtn"),
+        loadLocalBtn: document.getElementById("loadLocalBtn"),
+        clearBtn: document.getElementById("clearBtn"),
+        status: document.getElementById("status"),
+        seatGrid: document.getElementById("seatGrid"),
+        inspectorBody: document.getElementById("inspectorBody"),
+      };
+
+      const state = {
+        colCount: 8,
+        rowCount: 6,
+        hOrder: "asc", // 横方向
+        vOrder: "asc", // 縦方向
+        selectedSeat: null,
+        seatData: {} // {A1:{ear,head,arm,mic,other}}
+      };
+
+      function setStatus(msg, isError = false){
+        el.status.textContent = msg;
+        el.status.style.color = isError ? "var(--danger)" : "var(--muted)";
+      }
+
+      function toColumnLabel(index){
+        // 0 -> A, 25 -> Z, 26 -> AA
+        let n = index + 1;
+        let s = "";
+        while(n > 0){
+          const rem = (n - 1) % 26;
+          s = String.fromCharCode(65 + rem) + s;
+          n = Math.floor((n - 1) / 26);
+        }
+        return s;
+      }
+
+      function normalizePair(a, b, changed){
+        // チェックボックスでラジオボタンのように使う
+        if(changed === "a"){
+          if(a.checked) b.checked = false;
+          if(!a.checked && !b.checked) a.checked = true;
+        } else if(changed === "b"){
+          if(b.checked) a.checked = false;
+          if(!a.checked && !b.checked) b.checked = true;
+        } else {
+          if(a.checked && b.checked) b.checked = false;
+          if(!a.checked && !b.checked) a.checked = true;
+        }
+      }
+
+      function syncUiToState(){
+        el.colCount.value = state.colCount;
+        el.rowCount.value = state.rowCount;
+        el.hAsc.checked = state.hOrder === "asc";
+        el.hDesc.checked = state.hOrder === "desc";
+        el.vAsc.checked = state.vOrder === "asc";
+        el.vDesc.checked = state.vOrder === "desc";
+      }
+
+      function syncStateFromUi(){
+        normalizePair(el.hAsc, el.hDesc);
+        normalizePair(el.vAsc, el.vDesc);
+
+        state.colCount = Math.max(1, Math.min(200, Number(el.colCount.value) || 1));
+        state.rowCount = Math.max(1, Math.min(200, Number(el.rowCount.value) || 1));
+        state.hOrder = el.hAsc.checked ? "asc" : "desc";
+        state.vOrder = el.vAsc.checked ? "asc" : "desc";
+
+        el.colCount.value = state.colCount;
+        el.rowCount.value = state.rowCount;
+      }
+
+      function getColLabels(){
+        const cols = Array.from({length: state.colCount}, (_, i) => toColumnLabel(i));
+        if(state.hOrder === "desc") cols.reverse();
+        return cols;
+      }
+
+      function getRowNumbers(){
+        const rows = Array.from({length: state.rowCount}, (_, i) => i + 1);
+        if(state.vOrder === "desc") rows.reverse();
+        return rows;
+      }
+
+      function ensureSeatData(seat){
+        if(!state.seatData[seat]){
+          state.seatData[seat] = {
+            ear: false,
+            head: false,
+            arm: false,
+            mic: false,
+            other: ""
+          };
+        }
+        return state.seatData[seat];
+      }
+
+      function seatIssueCount(seat){
+        const d = ensureSeatData(seat);
+        let c = 0;
+        if(d.ear) c++;
+        if(d.head) c++;
+        if(d.arm) c++;
+        if(d.mic) c++;
+        return c;
+      }
+
+      function seatHasMemo(seat){
+        const d = ensureSeatData(seat);
+        return (d.other || "").trim().length > 0;
+      }
+
+      function isSeatInCurrentRange(seat){
+        const match = /^([A-Z]+)(\d+)$/.exec(seat);
+        if(!match) return false;
+        const colLabel = match[1];
+        const rowNum = Number(match[2]);
+
+        if(rowNum < 1 || rowNum > state.rowCount) return false;
+
+        let n = 0;
+        for(const ch of colLabel){
+          n = n * 26 + (ch.charCodeAt(0) - 64);
+        }
+        return n >= 1 && n <= state.colCount;
+      }
+
+      function renderGrid(){
+        syncStateFromUi();
+
+        const cols = getColLabels();
+        const rows = getRowNumbers();
+
+        const grid = el.seatGrid;
+        grid.innerHTML = "";
+        grid.style.gridTemplateColumns = `72px repeat(${cols.length}, minmax(84px, 1fr))`;
+
+        const corner = document.createElement("div");
+        corner.className = "corner-cell";
+        corner.textContent = "座席";
+        grid.appendChild(corner);
+
+        for(const c of cols){
+          const hc = document.createElement("div");
+          hc.className = "header-cell";
+          hc.textContent = c;
+          grid.appendChild(hc);
+        }
+
+        for(const r of rows){
+          const rh = document.createElement("div");
+          rh.className = "row-header";
+          rh.textContent = String(r);
+          grid.appendChild(rh);
+
+          for(const c of cols){
+            const seat = `${c}${r}`;
+            ensureSeatData(seat);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "seat-btn";
+            btn.dataset.seat = seat;
+            btn.setAttribute("aria-label", `${seat} を選択`);
+
+            if(state.selectedSeat === seat){
+              btn.classList.add("selected");
+            }
+
+            const issueCount = seatIssueCount(seat);
+            const hasMemo = seatHasMemo(seat);
+            if(issueCount > 0) btn.classList.add("has-issue");
+
+            const name = document.createElement("div");
+            name.className = "seat-name";
+            name.textContent = seat;
+
+            const meta = document.createElement("div");
+            meta.className = "seat-meta";
+
+            if(issueCount > 0){
+              const b1 = document.createElement("span");
+              b1.className = "badge badge-danger";
+              b1.textContent = `異常 ${issueCount}`;
+              meta.appendChild(b1);
+            }
+
+            if(hasMemo){
+              const b2 = document.createElement("span");
+              b2.className = "badge badge-note";
+              b2.textContent = "メモ";
+              meta.appendChild(b2);
+            }
+
+            if(issueCount === 0 && !hasMemo){
+              meta.textContent = "未入力 / 問題なし";
+            }
+
+            const mark = document.createElement("span");
+            mark.className = "mark";
+            mark.setAttribute("aria-hidden", "true");
+
+            btn.appendChild(name);
+            btn.appendChild(meta);
+            btn.appendChild(mark);
+
+            btn.addEventListener("click", () => {
+              state.selectedSeat = seat;
+              renderGrid();
+              renderInspector();
+            });
+
+            grid.appendChild(btn);
+          }
+        }
+
+        const total = state.colCount * state.rowCount;
+        const issueSeats = Object.keys(state.seatData).filter(s => {
+          if(!isSeatInCurrentRange(s)) return false;
+          return seatIssueCount(s) > 0;
+        }).length;
+
+        setStatus(`座席数 ${total}（横 ${state.colCount} × 縦 ${state.rowCount}） / 異常あり座席 ${issueSeats}`);
+      }
+
+      function renderInspector(){
+        const seat = state.selectedSeat;
+        if(!seat){
+          el.inspectorBody.innerHTML = `
+            <div class="placeholder">
+              左の座席をタップしてください。<br>
+              選んだ座席の点検内容をここで入力できます。
+            </div>
+          `;
+          return;
+        }
+
+        const d = ensureSeatData(seat);
+        const issueCount = seatIssueCount(seat);
+
+        el.inspectorBody.innerHTML = "";
+
+        const seatTarget = document.createElement("div");
+        seatTarget.className = "seat-target";
+        seatTarget.textContent = `選択中の座席: ${seat}`;
+        el.inspectorBody.appendChild(seatTarget);
+
+        const chkList = document.createElement("div");
+        chkList.className = "chk-list";
+
+        const items = [
+          { key: "ear",  label: "イヤーパッド" },
+          { key: "head", label: "ヘッドバンド" },
+          { key: "arm",  label: "アームバンド" },
+          { key: "mic",  label: "マイク風防" }
+        ];
+
+        items.forEach(item => {
+          const box = document.createElement("div");
+          box.className = "chk-item";
+
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = !!d[item.key];
+
+          input.addEventListener("change", () => {
+            d[item.key] = input.checked;
+            renderGrid();
+            renderInspector();
+          });
+
+          const text = document.createElement("span");
+          text.textContent = `${item.label}（異常あり）`;
+
+          label.appendChild(input);
+          label.appendChild(text);
+
+          const hint = document.createElement("div");
+          hint.className = "hint";
+          hint.textContent = "チェックを入れると CSV で「異常あり」と出力します";
+
+          box.appendChild(label);
+          box.appendChild(hint);
+          chkList.appendChild(box);
+        });
+
+        el.inspectorBody.appendChild(chkList);
+
+        const field2 = document.createElement("div");
+        field2.className = "field2";
+
+        const lbl = document.createElement("label");
+        lbl.textContent = "その他（自由入力）";
+
+        const ta = document.createElement("textarea");
+        ta.placeholder = "例）ケーブルゆるみ / 交換要 / 汚れあり など";
+        ta.value = d.other || "";
+
+        ta.addEventListener("input", () => {
+          d.other = ta.value;
+          renderGrid();
+        });
+
+        field2.appendChild(lbl);
+        field2.appendChild(ta);
+        el.inspectorBody.appendChild(field2);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const clearSeatBtn = document.createElement("button");
+        clearSeatBtn.type = "button";
+        clearSeatBtn.className = "mini";
+        clearSeatBtn.textContent = "この座席の入力をクリア";
+        clearSeatBtn.addEventListener("click", () => {
+          if(!confirm(`${seat} の入力をクリアします。よろしいですか？`)) return;
+          state.seatData[seat] = { ear:false, head:false, arm:false, mic:false, other:"" };
+          renderGrid();
+          renderInspector();
+        });
+
+        actions.appendChild(clearSeatBtn);
+        el.inspectorBody.appendChild(actions);
+
+        const countBox = document.createElement("div");
+        countBox.className = "count-box";
+        countBox.innerHTML = `
+          異常チェック数: <strong>${issueCount}</strong><br>
+          メモ: <strong>${(d.other || "").trim() ? "あり" : "なし"}</strong>
+        `;
+        el.inspectorBody.appendChild(countBox);
+      }
+
+      function getCurrentRecordsForCsv(){
+        const cols = getColLabels();
+        const rows = getRowNumbers();
+        const records = [];
+
+        for(const r of rows){
+          for(const c of cols){
+            const seat = `${c}${r}`;
+            const d = ensureSeatData(seat);
+            records.push({
+              "座席": seat,
+              "イヤーパッド": d.ear ? "異常あり" : "",
+              "ヘッドバンド": d.head ? "異常あり" : "",
+              "アームバンド": d.arm ? "異常あり" : "",
+              "マイク風防": d.mic ? "異常あり" : "",
+              "その他": d.other || ""
+            });
+          }
+        }
+        return records;
+      }
+
+      function csvEscape(v){
+        const s = String(v ?? "");
+        if(/[",\r\n]/.test(s)){
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }
+
+      function exportCsv(){
+        syncStateFromUi();
+
+        const headers = ["座席","イヤーパッド","ヘッドバンド","アームバンド","マイク風防","その他"];
+        const rows = getCurrentRecordsForCsv();
+
+        if(rows.length === 0){
+          setStatus("CSV保存するデータがありません", true);
+          return;
+        }
+
+        const lines = [
+          headers.map(csvEscape).join(","),
+          ...rows.map(r => headers.map(h => csvEscape(r[h])).join(","))
+        ];
+
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+
+        const now = new Date();
+        const stamp = [
+          now.getFullYear(),
+          String(now.getMonth()+1).padStart(2, "0"),
+          String(now.getDate()).padStart(2, "0"),
+          "_",
+          String(now.getHours()).padStart(2, "0"),
+          String(now.getMinutes()).padStart(2, "0"),
+          String(now.getSeconds()).padStart(2, "0"),
+        ].join("");
+
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `LL教室点検_${stamp}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+
+        setStatus("CSVを保存しました");
+      }
+
+      function saveLocal(){
+        syncStateFromUi();
+        const payload = {
+          version: 2,
+          colCount: state.colCount,
+          rowCount: state.rowCount,
+          hOrder: state.hOrder,
+          vOrder: state.vOrder,
+          selectedSeat: state.selectedSeat,
+          seatData: state.seatData
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        setStatus("端末内に一時保存しました");
+      }
+
+      function loadLocal(){
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw){
+          setStatus("一時保存データがありません", true);
+          return;
+        }
+
+        try{
+          const d = JSON.parse(raw);
+          state.colCount = Math.max(1, Math.min(200, Number(d.colCount) || 1));
+          state.rowCount = Math.max(1, Math.min(200, Number(d.rowCount) || 1));
+          state.hOrder = d.hOrder === "desc" ? "desc" : "asc";
+          state.vOrder = d.vOrder === "desc" ? "desc" : "asc";
+          state.selectedSeat = typeof d.selectedSeat === "string" ? d.selectedSeat : null;
+          state.seatData = (d.seatData && typeof d.seatData === "object") ? d.seatData : {};
+          syncUiToState();
+          renderGrid();
+          if(state.selectedSeat && !isSeatInCurrentRange(state.selectedSeat)){
+            state.selectedSeat = null;
+          }
+          renderInspector();
+          setStatus("一時保存データを読み込みました");
+        }catch(e){
+          setStatus("一時保存データの読み込みに失敗しました", true);
+        }
+      }
+
+      function clearAll(){
+        if(!confirm("現在の範囲の全座席の入力内容をクリアします。よろしいですか？")) return;
+
+        const cols = Array.from({length: state.colCount}, (_, i) => toColumnLabel(i));
+        const rows = Array.from({length: state.rowCount}, (_, i) => i + 1);
+
+        for(const r of rows){
+          for(const c of cols){
+            state.seatData[`${c}${r}`] = { ear:false, head:false, arm:false, mic:false, other:"" };
+          }
+        }
+
+        renderGrid();
+        renderInspector();
+        setStatus("現在の範囲の全座席入力をクリアしました");
+      }
+
+      el.hAsc.addEventListener("change", () => normalizePair(el.hAsc, el.hDesc, "a"));
+      el.hDesc.addEventListener("change", () => normalizePair(el.hAsc, el.hDesc, "b"));
+      el.vAsc.addEventListener("change", () => normalizePair(el.vAsc, el.vDesc, "a"));
+      el.vDesc.addEventListener("change", () => normalizePair(el.vAsc, el.vDesc, "b"));
+
+      el.generateBtn.addEventListener("click", () => {
+        renderGrid();
+        if(state.selectedSeat && !isSeatInCurrentRange(state.selectedSeat)){
+          state.selectedSeat = null;
+        }
+        renderInspector();
+      });
+
+      el.csvBtn.addEventListener("click", exportCsv);
+      el.saveLocalBtn.addEventListener("click", saveLocal);
+      el.loadLocalBtn.addEventListener("click", loadLocal);
+      el.clearBtn.addEventListener("click", clearAll);
+
+      syncStateFromUi();
+      renderGrid();
+      renderInspector();
+    })();
+  </script>
+</body>
+</html>
